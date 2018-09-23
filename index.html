@@ -1,0 +1,104 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        <title>Here App</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
+
+        <script src="https://unpkg.com/dayjs"></script>
+        <script src="https://unpkg.com/vue"></script>
+        <script src="vue-clipboard.min.js"></script>
+    </head>
+    <body>
+        <section class="hero is-fullheight">
+        <div class="hero-body">
+        <div id="hereApp" class="container has-text-centered">
+            <div class="content">
+            <h1>Here App</h1>
+            <form v-on:submit.prevent="addNew">
+                <input v-model="name" placeholder="Who is here?" class="input is-rounded" style="text-align: center">
+            </form>
+            <h3>{{ message }}</h3>
+            
+            <div class="box" style="max-height:50%; overflow:auto">
+            <ol v-bind:reversed="isRev" class="has-text-left">
+                <li v-for="here in displayList">
+                    {{ here.name }} {{ here.time | formatTime }}
+                </li>
+            </ol>
+            </div>
+            <button class="button is-small" @click="isRev = !isRev; displayList = displayList.reverse()">Sort</button> <button class="button is-small is-light" @click="clearList">Clear</button> <button class="button is-small is-info" @click="doCopy">Copy</button>
+            </div>
+        </div>
+        </div>
+        </section>
+        
+        <script>
+            var app = new Vue({
+                el: '#hereApp',
+                data: {
+                    name: '',
+                    displayList: [],
+                    listHere: [],
+                    message: 'Noone is here!',
+                    isRev: true
+                },
+                mounted() {
+                    if (localStorage.getItem('listHere')) {
+                        try {
+                            this.listHere = JSON.parse(localStorage.getItem('listHere'))
+                            if (this.listHere.length > 0)
+                                this.message = this.listHere.length + ' people is here!'
+                            this.displayList = this.isRev ? this.listHere.slice().reverse() : this.displayList = this.listHere.slice()
+                        } catch(e) {
+                            localStorage.removeItem('listHere')
+                        }
+                    }
+                },
+                methods: {
+                    addNew: function() {
+                        if (this.name.trim() == '') {
+                            this.name = ''
+                            return
+                        }
+                        this.listHere.push({
+                            name: this.name,
+                            time: new Date()
+                        })
+                        this.message = this.name + " is here!"
+                        this.name = ''
+                        this.saveList()
+                        this.displayList = this.isRev ? this.listHere.slice().reverse() : this.displayList = this.listHere.slice()
+                    },
+                    clearList() {
+                      this.listHere = []
+                      this.displayList = []
+                      this.message = 'Noone is here!'
+                      this.saveList()
+                    },
+                    saveList() {
+                        const parsed = JSON.stringify(this.listHere)
+                        localStorage.setItem('listHere', parsed)
+                    },
+                    doCopy: function () {
+                        var names = '';
+                        this.listHere.forEach(function(item) {
+  names += item.name + ' ' + dayjs(item.time).format('HH:mm:ss') + "\r\n";
+});
+                        this.$copyText(names).then(function (e) {
+                          alert('Copied')
+                          console.log(e)
+                        }, function (e) {
+                          alert('Can not copy')
+                          console.log(e)
+                        })
+                    }
+                },
+                filters: {
+                    formatTime: function(value) {
+                        return dayjs(value).format('HH:mm:ss')
+                    }
+                }
+            })
+        </script>
+    </body>
+</html>
