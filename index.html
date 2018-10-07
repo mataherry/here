@@ -3,6 +3,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
         <title>Here App</title>
         <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css">
+        <style>
+            input[type=text] {text-align: center;}
+        </style>
 
         <script src="https://unpkg.com/dayjs"></script>
         <script src="https://unpkg.com/vue"></script>
@@ -11,30 +15,41 @@
         <script src="vue-clipboard.min.js"></script>
     </head>
     <body>
-        <section class="hero is-fullheight">
-        <div class="hero-body">
-        <div id="hereApp" class="container has-text-centered" style="max-width:500px">
-            <div class="content">
-            <h1>Here App</h1>
-            <form v-on:submit.prevent="addNew">
-                <b-input v-model="name" placeholder="Who is here?" rounded style="text-align: center; width:300px"></b-input>
-            </form>
-            <h3>{{ message }}</h3>
-            <template>
-                <b-datepicker placeholder="Click to select..." icon="calendar-today" v-model="selectedDate" :selectable-dates="listDate" @input="getNames(selectedDate)" :date-formatter="dateFormat" :mobile-native="false">
-                </b-datepicker>
-            </template>
-            <div class="box" style="max-height:50%; overflow:auto">
-                <ol v-bind:reversed="isRev" class="has-text-left">
-                    <li v-for="here in displayList">
-                        {{ here.name }} {{ here.time | formatTime }}
-                    </li>
-                </ol>
+        <section id="hereApp" class="hero is-fullheight">
+            <div class="hero-head"></div>
+            <div class="hero-body">
+                <div class="container has-text-centered" style="max-width:500px">
+                    <div class="content">
+                    <h1 class="title">Here App</h1>
+                    <form v-on:submit.prevent="addNew">
+                        <div class="field is-grouped is-grouped-centered">
+                            <p class="control has-icons-left">
+                                <b-input v-model="name" placeholder="Who is here?" rounded></b-input>
+                                <span class="icon is-small is-left">
+                                  <i class="fas fa-user"></i>
+                                </span>
+                            </p>
+                        </div>
+                    </form>
+                    <h3>{{ message }}</h3>
+                    <div class="field is-grouped is-grouped-centered">
+                        <template>
+                            <b-datepicker icon-pack="fa" icon="calendar-alt" v-model="selectedDate" :events="listDate" indicators="bars" @input="getNames(selectedDate)" :date-formatter="dateFormat" :mobile-native="false" rounded>
+                            </b-datepicker>
+                        </template>
+                    </div>
+                    <div class="box" style="max-height:50%; overflow:auto">
+                        <ol v-bind:reversed="isRev" class="has-text-left">
+                            <li v-for="here in displayList">
+                                {{ here.name }} {{ here.time | formatTime }}
+                            </li>
+                        </ol>
+                    </div>
+                    <button class="button is-small is-rounded" @click="isRev = !isRev; displayList = displayList.reverse()">Sort</button> <button class="button is-small is-light is-rounded" @click="clearList">Clear</button> <button class="button is-small is-info is-rounded" @click="doCopy">Copy</button>
+                    </div>
+                </div>
             </div>
-            <button class="button is-small" @click="isRev = !isRev; displayList = displayList.reverse()">Sort</button> <button class="button is-small is-light" @click="clearList">Clear</button> <button class="button is-small is-info" @click="doCopy">Copy</button>
-            </div>
-        </div>
-        </div>
+            <div class="hero-foot"></div>
         </section>
         
         <script>
@@ -45,7 +60,7 @@
                     displayList: [],
                     listDate: [],
                     listHere: [],
-                    message: 'Noone is here!',
+                    message: 'No one is here!',
                     isRev: true,
                     selectedDate: dayjs().startOf('day').toDate()
                 },
@@ -57,12 +72,7 @@
                                 this.listDate = this.listHere.map(h => dayjs(h.date).toDate())
                             }
                             
-                            var i = this.listHere.findIndex(h => h.date === dayjs(this.selectedDate).format('YYYYMMDD'))
-                            if(i >= 0) {
-                                this.message = this.listHere[i].names.length + ' people is here!'
-                                this.displayList = this.listHere[i].names.slice()
-                                if (this.isRev) this.displayList = this.displayList.reverse()
-                            }
+                            this.getNames(this.selectedDate)
                         } catch(e) {
                             //localStorage.removeItem('listHere')
                         }
@@ -113,8 +123,8 @@
                         if (i < 0) return
                         names = this.dateFormat(this.listHere[i].date) + "\r\n";
                         this.listHere[i].names.forEach(function(item) {
-                          names += item.name + ' ' + dayjs(item.time).format('HH:mm:ss') + "\r\n";
-                        });
+  names += item.name + ' ' + dayjs(item.time).format('HH:mm:ss') + "\r\n";
+});
                         this.$copyText(names).then(function (e) {
                           alert('Copied')
                           console.log(e)
@@ -123,11 +133,16 @@
                           console.log(e)
                         })
                     },
-                    getNames: function(selectedDate) {
+                    getNames(selectedDate) {
                         var i = this.listHere.findIndex(h => h.date === dayjs(this.selectedDate).format('YYYYMMDD'))
                         if (i >= 0) {
                             this.displayList = this.listHere[i].names.slice()
-                        if (this.isRev) this.displayList = this.displayList.reverse()
+                            if (this.isRev) this.displayList = this.displayList.reverse()
+                            this.message = this.listHere[i].names.length + ' people ' + (this.listHere[i].names.length > 1 ? 'were' : 'was') + ' here!'
+                        }
+                        else {
+                            this.displayList = []
+                            this.message = "No one was here!"
                         }
                     },
                     dateFormat(date) {
